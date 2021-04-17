@@ -12,188 +12,213 @@ use pocketmine\nbt\tag\{CompoundTag,IntTag,StringTag};
 
 use pocketmine\utils\{Config,TextFormat as Text};
 
-class PlayerHCF extends Player {
+class PlayerHCF extends Player
+{
 
-public const PUBLIC_CHAT = 0;
+    public const PUBLIC_CHAT = 0;
 
-public const FACTION_CHAT = 1;
+    public const FACTION_CHAT = 1;
 
-public const ALLY_CHAT = 2;
+    public const ALLY_CHAT = 2;
 
-public const STAFF_CHAT = 3;
+    public const STAFF_CHAT = 3;
 
-public $hcf;
+    public $hcf;
 
-public $class = "";
-public $oldClass;
+    public $class = "";
+    public $oldClass;
 
-public $region = "";
+    public $region = "";
 
-public $balance = 0;
+    public $balance = 0;
 
-public $invites = [];
+    public $invites = [];
 
-public $logout = false;
+    public $logout = false;
 
-public $reclaim = false;
-  
-public $chat = self::PUBLIC;
+    public $reclaim = false;
 
-/** @here Scoreboard **/
-public $scoreboard;
+    public $chat = self::PUBLIC;
 
-/** @var Array[] String **/
-public $permissions = [];
+    /** @here Scoreboard * */
+    public $scoreboard;
 
-/** @var Array[] Item **/
-public $inventory = [];
+    /** @var Array[] String * */
+    public $permissions = [];
 
-/** @var Array[] Item **/
-public $armorInventory = [];
+    /** @var Array[] Item * */
+    public $inventory = [];
 
-public $faction;
+    /** @var Array[] Item * */
+    public $armorInventory = [];
 
-public $factionRole;
+    public $faction;
 
-public $kills = 0;
-public $deaths = 0;
+    public $factionRole;
 
-public $cooldown = ["EnderPearl" => 0];
+    public $kills = 0;
+    public $deaths = 0;
 
-public function addKill(int $amount):void{
-$this->kills += $amount;
-}
+    public $cooldown = [];
 
-public function addDeath(int $amount):void{
-$this->deaths += $amount;
-}
+    public function addKill(int $amount): void
+    {
+        $this->kills += $amount;
+    }
 
-public function setLogout(bool $value = true){
-$this->logout = $value;  
-}
+    public function addDeath(int $amount): void
+    {
+        $this->deaths += $amount;
+    }
 
-public function getLogout(): bool {
-return $this->logout ?? null;
-}
+    public function setLogout(bool $value = true)
+    {
+        $this->logout = $value;
+    }
 
-public function getCooldown(string $name): int {
-switch($name){
-case "EnderPearl":
-return (int)$this->cooldown["EnderPearl"];  
-break;
-     }
-}
- 
-public function setItems(Item $item){
-$this->inventory[] = $item;
-}
+    public function getLogout(): bool
+    {
+        return $this->logout ?? null;
+    }
 
-public function getItems(): array {
-return (array)$this->inventory;  
-}
+    public function getCooldown(string $name): int
+    {
+        switch ($name) {
+            case "EnderPearl":
+                return (int)$this->cooldown["EnderPearl"];
+                break;
+        }
+    }
 
-public function setHelmet(Item $item){
-$this->armorInventory["helmet"] = $item; 
-}
+    public function setItems(Item $item)
+    {
+        $this->inventory[] = $item;
+    }
 
-public function setChestPlate(Item $item){
-$this->armorInventory["chestplate"] = $item;
-}
+    public function getItems(): array
+    {
+        return (array)$this->inventory;
+    }
 
-public function setLeggings(Item $item){
-$this->armorInventory["leggings"] = $item;
-}
+    public function setHelmet(Item $item)
+    {
+        $this->armorInventory["helmet"] = $item;
+    }
 
-public function setBoots(Item $item){
-$this->armorInventory["boots"] = $item; 
-}
+    public function setChestPlate(Item $item)
+    {
+        $this->armorInventory["chestplate"] = $item;
+    }
 
-public function getHelmet(): Item {
-return $this->armorInventory["helmet"]; 
-}
+    public function setLeggings(Item $item)
+    {
+        $this->armorInventory["leggings"] = $item;
+    }
 
-public function getChestPlate(): Item {
-return $this->armorInventory["chestplate"];
-}
+    public function setBoots(Item $item)
+    {
+        $this->armorInventory["boots"] = $item;
+    }
 
-public function getLeggings(): Item {
-return $this->armorInventory["leggings"];  
-}
+    public function getHelmet(): Item
+    {
+        return $this->armorInventory["helmet"];
+    }
 
-public function getBoots(): Item {
-return $this->armorInventory["boots"];  
-}
+    public function getChestPlate(): Item
+    {
+        return $this->armorInventory["chestplate"];
+    }
 
-public function setStaffMode(bool $value = false): void {
-$this->staff["enabled"] = $value;
-}
+    public function getLeggings(): Item
+    {
+        return $this->armorInventory["leggings"];
+    }
 
-public function getStaffMode(): bool {
-return $this->staff["enabled"];
-}
+    public function getBoots(): Item
+    {
+        return $this->armorInventory["boots"];
+    }
 
-public function sendStaffMode(): void {
-foreach($this->getInventory()->getContents() as $item){
-  $this->setItems($item);
-}
-$this->setHelmet($this->getArmorInventory()->getHelmet());
-$this->setChestPlate($this->getArmorInventory()->getChestplate());
-$this->setLeggings($this->getArmorInventory()->getLeggings());
-$this->setBoots($this->getArmorInventory()->getBoots());
-$this->getInventory()->clearAll(true);
-$this->getArmorInventory()->clearAll(true);
-$this->removeAllEffects();
-$this->setGamemode(0);
-$this->setAllowFlight(true);
-$this->setFlying(true);
-$freezeId = Item::get(Item::FROSTED_ICE, 0, 1);
-$freezeId->setCustomName(Text::AQUA . "Freeze Player"); 
-$freezeId->setLore([Text::GRAY . "Right click to freeze the player, Left click to see the frozen status of the player (not added)"]);
-$freeezeTag = $freezeId->getNamedTag();
-$freeezeTag->setString("staffmode", "freezeItem");
-$freezeId->setNamedTag($freeezeTag);
+    public function setStaffMode(bool $value = false): void
+    {
+        $this->staff["enabled"] = $value;
+    }
 
-$randomTeleport = Item::get(Item::COMPASS, 0, 1);
-$randomTeleport->setCustomName(Text::YELLOW . "Random Teleport");
-$randomTeleport->setLore([Text::GRAY . "Left Click to teleport to a player or a block"]);
-$randomTeleportTag = $randomTeleport->getNamedTag();
-$randomTeleportTag->setString("staffmode", "randomTeleport");
-$randomTeleport->setNamedTag($randomTeleportTag);
+    public function getStaffMode(): bool
+    {
+        return $this->staff["enabled"];
+    }
 
-$vanish = Item::get(351, 10, 1);
-$vanish->setCustomName(Text::GREEN . "Vanish"); 
-$vanish->setLore([Text::GRAY . "Click Left to hide or show"]);
-$vanishTag = $vanish->getNamedTag();
-$vanishTag->setString("staffmode", "vanishItem");
-$vanish->setNamedTag($vanishTag);
+    public function sendStaffMode(): void
+    {
+        foreach ($this->getInventory()->getContents() as $item) {
+            $this->setItems($item);
+        }
+        $this->setHelmet($this->getArmorInventory()->getHelmet());
+        $this->setChestPlate($this->getArmorInventory()->getChestplate());
+        $this->setLeggings($this->getArmorInventory()->getLeggings());
+        $this->setBoots($this->getArmorInventory()->getBoots());
+        $this->getInventory()->clearAll(true);
+        $this->getArmorInventory()->clearAll(true);
+        $this->removeAllEffects();
+        $this->setGamemode(0);
+        $this->setAllowFlight(true);
+        $this->setFlying(true);
+        $freezeId = Item::get(Item::FROSTED_ICE, 0, 1);
+        $freezeId->setCustomName(Text::AQUA . "Freeze Player");
+        $freezeId->setLore([Text::GRAY . "Right click to freeze the player, Left click to see the frozen status of the player (not added)"]);
+        $freeezeTag = $freezeId->getNamedTag();
+        $freeezeTag->setString("staffmode", "freezeItem");
+        $freezeId->setNamedTag($freeezeTag);
 
-$seeInventory = Item::get(Item::BOOK, 0, 1);
-$seeInventory->setCustomName(Text::GOLD . "SeeInventory Player");
-$seeInventory->setLore([Text::GRAY . ""]);
-$seeInventoryTag = $seeInventory->getNamedTag();
-$seeInventoryTag->setString("staffmode", "seeInventory");
-$seeInventory->setNamedTag($seeInventoryTag);
+        $randomTeleport = Item::get(Item::COMPASS, 0, 1);
+        $randomTeleport->setCustomName(Text::YELLOW . "Random Teleport");
+        $randomTeleport->setLore([Text::GRAY . "Left Click to teleport to a player or a block"]);
+        $randomTeleportTag = $randomTeleport->getNamedTag();
+        $randomTeleportTag->setString("staffmode", "randomTeleport");
+        $randomTeleport->setNamedTag($randomTeleportTag);
 
-$this->getInventory()->setItem(0, $vanish);
-$this->getInventory()->setItem(2, $randomTeleport);
+        $vanish = Item::get(351, 10, 1);
+        $vanish->setCustomName(Text::GREEN . "Vanish");
+        $vanish->setLore([Text::GRAY . "Click Left to hide or show"]);
+        $vanishTag = $vanish->getNamedTag();
+        $vanishTag->setString("staffmode", "vanishItem");
+        $vanish->setNamedTag($vanishTag);
+
+        $seeInventory = Item::get(Item::BOOK, 0, 1);
+        $seeInventory->setCustomName(Text::GOLD . "SeeInventory Player");
+        $seeInventory->setLore([Text::GRAY . ""]);
+        $seeInventoryTag = $seeInventory->getNamedTag();
+        $seeInventoryTag->setString("staffmode", "seeInventory");
+        $seeInventory->setNamedTag($seeInventoryTag);
+
+        $this->getInventory()->setItem(0, $vanish);
+        $this->getInventory()->setItem(2, $randomTeleport);
 //$this->getInventory()->setItem(4, $configuration);
-$this->getInventory()->setItem(6, $freezeId);
-$this->getInventory()->setItem(8, $seeInventory);
-$this->addTitle(Text::AQUA . "STAFFMODE", Text::GREEN . "Enabled");
-$this->setStaffMode(true);
-}
+        $this->getInventory()->setItem(6, $freezeId);
+        $this->getInventory()->setItem(8, $seeInventory);
+        $this->addTitle(Text::AQUA . "STAFFMODE", Text::GREEN . "Enabled");
+        $this->setStaffMode(true);
+    }
 
-public function notSendStaffMode(): void {
-$this->getInventory()->clearAll(true);
-$this->getArmorInventory()->clearAll(true);
+    public function notSendStaffMode(): void
+    {
+        $this->getInventory()->clearAll(true);
+        $this->getArmorInventory()->clearAll(true);
 
-$this->inventory = [];
-$this->setGamemode(0);
-$this->setAllowFlight(false);
-$this->setFlying(false);
-foreach(HCFLoad::getInstance()->getServer()->getOnlinePlayers() as $player){
-$player->showPlayer($this);
-}
-$this->setStaffMode(false);
-}
+        $this->inventory = [];
+        $this->setGamemode(0);
+        $this->setAllowFlight(false);
+        $this->setFlying(false);
+        foreach (HCFLoad::getInstance()->getServer()->getOnlinePlayers() as $player) {
+            $player->showPlayer($this);
+        }
+        $this->setStaffMode(false);
+    }
+
+    public function setCombatTag()
+    {
+        $this->cooldown["CombatTag"] = HCFLoad::getInstance()->getConfig()->get("cooldown")["COMBAT_TAG"];
+    }
 }

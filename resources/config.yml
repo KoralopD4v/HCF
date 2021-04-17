@@ -13,13 +13,11 @@ webhook-check: false
 gui-enabled: true
 
 # Cooldowns
-cooldown: 
- EnderPearl: 30
- CombatTag: 20
- GoldenApple: 10
- ArcherTag: 10
- Snowball: 15
- AntiTrapper: 150
+COOLDOWN:
+ ENDERPEARL: 30
+ COMBAT_TAG: 20
+ GAPPLE: 10
+ ARCHERTAG: 10
 
 # Special Items
 special-items:
@@ -33,7 +31,6 @@ factions:
 commands-cooldown:
  report: 45
  logout: 30
- report: 50 
  
 blocked-items: []
 blocked-blocks: []

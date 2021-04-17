@@ -16,16 +16,20 @@ use pocketmine\nbt\tag\{StringTag, ListTag};
 
 use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
 
-class LogoutZombie extends Zombie {
+class LogoutZombie extends Zombie
+{
 
-public $nombre = "";
+    public $nombre = "";
 
+    public $items = [];
+    public $armor = [];
 
-public $timeLeft = 0;
+    public $timeLeft = 0;
 
-public function initEntity(): void {
-parent::initEntity();
-$this->setMaxHealth(200);
-}
+    public function initEntity(): void
+    {
+        parent::initEntity();
+        $this->setMaxHealth(200);
+    }
 }
 ?>
